@@ -1,0 +1,71 @@
+<program> := <declaration_list>
+<declaration_list> := <declaration> <declaration_list_tail>
+<declaration_list_tail> := <declaration> <deliaration_list_tail>
+                         | <empty>
+<declaration> := <var_declaration>
+               | <fun_declaration>
+<var_declaration> := <type_specifier> ID ;
+                   | <type_specifier> ID [ NUM ] ;
+<type_specifier> := int
+                  | void
+<fun_declaration> := <type_specifier> ID ( <params> ) <compound_stmt>
+<params> := <param_list>
+          | void
+<param_list> := <parm> <parm_list_tail>
+<parm_list_tail> := , <param> <parm_list_tail>
+                  | <empty>
+<param> := <type_specifier> ID
+         | <type_specifier> ID [ ]
+<compound_stmt> := { <local_declarations> <statement_list> }
+<local_declarations> := <var_declaration> <local_declarations_tail>
+                      | <empty>
+<local_declarations_tail> := <var_declaration> <local_declarations_tail>
+                           | <empty>
+<statement_list> := <statement> <statement_list_tail>
+                  | <empty>
+<statement_list_tail> := <statement> <statement_list_tail>
+                       | <empty>
+<statement> := <expression_stmt>
+             | <compound_stmt>
+             | <selection_stmt>
+             | <iteration_stmt>
+             | <return_stmt>
+<expression_stmt> := <expression> ;
+                   | ;
+<selection_stmt> := if ( <expression> ) <statement>
+                  | if ( <expression> ) <statement> else <statement>
+<iteration_stmt> := while ( <expression> ) <statement>
+<return_stmt> := return ;
+               | return <expression> ;
+<expression> := <var> = <expression>
+              | <simple_expression>
+<var> := ID
+       | ID [ <expression> ]
+<simple_expression> := <additive_expression> <relop> <additive_expression>
+                     | <additive_expression>
+<relop> := <=
+         | <
+         | >
+         | >=
+         | ==
+         | !=
+<additive_expression> := <term> <additive_expression_tail>
+<additive_expression_tail> := <addop> <term> <additive_expression_tail>
+                            | <empty>
+<addop> := +
+         | -
+<term> := <factor> <term_tail>
+<term_tail> := <mulop> <factor>
+             | <empty>
+<mulop> := *
+         | /
+<factor> := ( <expression> )
+          | <var>
+          | <call>
+          | NUM
+<call> := ID ( <args> )
+<args> := <arg_list>
+        | <empty>
+<arg_list> := <expression> <arg_list_tail>
+<arg_list_tail> := , <expression> <arg_list_tail>
+                 | <empty>
