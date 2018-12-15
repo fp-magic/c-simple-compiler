@@ -319,8 +319,16 @@ void Scan::parseState(int stateBefore, char *token)
                         return;
                     }
                 }
-                tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), identifierTable.size()));
-                identifierTable.push_back(std::string(token));
+                auto it = std::find(identifierTable.begin(), identifierTable.end(), std::string(token));
+                if(it == identifierTable.end())
+                {
+                    tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), identifierTable.size()));
+                    identifierTable.push_back(std::string(token));
+                }
+                else
+                {
+                    tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), it-identifierTable.begin()));
+                }
                 return;
             }
         case STATE_DELIMITER_L: case STATE_DELIMITER_R: case STATE_COMMENT_MAYBE:

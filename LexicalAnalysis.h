@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <algorithm>
 
 // token 类型
 const int TOKEN_TYPE_EOF            = -1;   // Token 末尾

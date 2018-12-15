@@ -5,12 +5,14 @@ Syntax::Syntax()
 {
     errPos = -1;
     errMessage = "";
+    syntaxProcess.clear();
 }
 
 Syntax::Syntax(Scan scanner)
 {
     errPos = -1;
     errMessage = "";
+    syntaxProcess.clear();
     this->scanner = scanner;
 }
 
@@ -19,9 +21,11 @@ int Syntax::program()
     #ifdef DEBUG
     printf("----------program\n");
     #endif
-    int res, ori_index;
-    initAll();
+    int res, ori_index, ori_process;
+    //initAll();
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_PROGRAM);
     res = declaration_list();
     if(res == 0)
     {
@@ -29,6 +33,7 @@ int Syntax::program()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -39,8 +44,10 @@ int Syntax::declaration_list()
     #ifdef DEBUG
     printf("----------declaration_list\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_DECLARATION_LIST);
     res = declaration();
     if(res == 0)
     {
@@ -51,12 +58,14 @@ int Syntax::declaration_list()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -67,8 +76,10 @@ int Syntax::declaration_list_tail()
     #ifdef DEBUG
     printf("----------declaration_list_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_1);
     res = declaration();
     if(res == 0)
     {
@@ -79,12 +90,16 @@ int Syntax::declaration_list_tail()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 4 <declaration_list_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 4 <declaration_list_tail> := <empty>
     }
@@ -95,8 +110,10 @@ int Syntax::declaration()
     #ifdef DEBUG
     printf("----------declaration\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_DECLARATION_1);
     res = var_declaration();
     if(res == 0)
     {
@@ -104,6 +121,8 @@ int Syntax::declaration()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_DECLARATION_2);
         scanner.setIndex(ori_index);
         res = fun_declaration();
         if(res == 0)
@@ -112,6 +131,7 @@ int Syntax::declaration()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
@@ -123,8 +143,10 @@ int Syntax::var_declaration()
     #ifdef DEBUG
     printf("----------var_declaration\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_VAR_DECLARATION_1);
     res = type_specfier();
     if(res == 0)
     {
@@ -135,7 +157,7 @@ int Syntax::var_declaration()
             temp = scanner.next();
             if(temp.isDelimiter()&&temp.name == std::string(";"))
             {
-                addNum(pretemp.identifierAndIntPos);
+                //addNum(pretemp.identifierAndIntPos);
                 return 0;   // 7 <var_declaration> := <type_specifier> ID ;
             }
             else if(temp.isDelimiter()&&temp.name == std::string("["))
@@ -143,17 +165,19 @@ int Syntax::var_declaration()
                 temp = scanner.next();
                 if(temp.isInt())
                 {
-                    addArray(pretemp.identifierAndIntPos,temp.valueInt);
+                    //addArray(pretemp.identifierAndIntPos,temp.valueInt);
                     temp = scanner.next();
                     if(temp.isDelimiter()&&temp.name == std::string("]"))
                     {
                         temp = scanner.next();
                         if(temp.isDelimiter()&&temp.name == std::string(";"))
                         {
+                            syntaxProcess.at(ori_process) = PROCESS_VAR_DECLARATION_2;
                             return 0;   // 8 <var_declaration> := <type_specifier> ID [ NUM ] ;
                         }
                         else
                         {
+                            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                             if(scanner.curIndex - 1 > errPos)
                             {
                                 errPos = scanner.curIndex - 1;
@@ -165,6 +189,7 @@ int Syntax::var_declaration()
                     }
                     else
                     {
+                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         if(scanner.curIndex - 1 > errPos)
                         {
                             errPos = scanner.curIndex - 1;
@@ -176,6 +201,7 @@ int Syntax::var_declaration()
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -187,6 +213,7 @@ int Syntax::var_declaration()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -198,6 +225,7 @@ int Syntax::var_declaration()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -209,6 +237,7 @@ int Syntax::var_declaration()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -219,15 +248,17 @@ int Syntax::fun_declaration()
     #ifdef DEBUG
     printf("----------fun_declaration\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_FUN_DECLARATION);
     res = type_specfier();
     if(res == 0)
     {
         Token temp = scanner.next();
         if(temp.isIdentifier())
         {
-            addFun(temp.identifierAndIntPos);
+            //addFun(temp.identifierAndIntPos);
             temp = scanner.next();
             if(temp.isDelimiter()&&temp.name == std::string("("))
             {
@@ -240,11 +271,12 @@ int Syntax::fun_declaration()
                         res = compound_stmt();
                         if(res == 0)
                         {
-                            backFun();
+                            //backFun();
                             return 0;   // 11 <fun_declaration> := <type_specifier> ID ( <params> ) <compound_stmt>
                         }
                         else
                         {
+                            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                             scanner.setIndex(ori_index);
                             return res;
                         }
@@ -252,6 +284,7 @@ int Syntax::fun_declaration()
                     }
                     else
                     {
+                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         if(scanner.curIndex - 1 > errPos)
                         {
                             errPos = scanner.curIndex - 1;
@@ -263,12 +296,14 @@ int Syntax::fun_declaration()
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     scanner.setIndex(ori_index);
                     return res;
                 }
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -280,6 +315,7 @@ int Syntax::fun_declaration()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -291,6 +327,7 @@ int Syntax::fun_declaration()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -301,19 +338,23 @@ int Syntax::type_specfier()
     #ifdef DEBUG
     printf("----------type_specfier\n");
     #endif
-    int ori_index;
+    int ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
     Token temp = scanner.next();
     if(temp.isKeyWord()&&temp.name == std::string("int"))
     {
+        syntaxProcess.push_back(PROCESS_TYPE_SPECFIER_1);
         return 0;   // 9 <type_specifier> := int
     }
     else if(temp.isKeyWord()&&temp.name == std::string("void"))
     {
+        syntaxProcess.push_back(PROCESS_TYPE_SPECFIER_2);
         return 0;   // 10 <type_specifier> := void
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return -1;
     }
@@ -324,8 +365,10 @@ int Syntax::params()
     #ifdef DEBUG
     printf("----------params\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_TYPE_SPECFIER_1);
     res = param_list();
     if(res == 0)
     {
@@ -333,6 +376,8 @@ int Syntax::params()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_PARAMS_2);
         scanner.setIndex(ori_index);
         Token temp = scanner.next();
         if(temp.isKeyWord()&&temp.name == std::string("void"))
@@ -341,6 +386,7 @@ int Syntax::params()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -357,8 +403,10 @@ int Syntax::param_list()
     #ifdef DEBUG
     printf("----------param_list\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_PARAM_LIST);
     res = param();
     if(res == 0)
     {
@@ -369,12 +417,14 @@ int Syntax::param_list()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -385,8 +435,10 @@ int Syntax::param_list_tail()
     #ifdef DEBUG
     printf("----------param_list_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_1);
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string(","))
     {
@@ -400,18 +452,24 @@ int Syntax::param_list_tail()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
                 return 0;   // 16 <parm_list_tail> := <empty>
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 16 <parm_list_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 16 <parm_list_tail> := <empty>
     }
@@ -422,8 +480,10 @@ int Syntax::param()
     #ifdef DEBUG
     printf("----------param\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_PARAM_2);
     res = type_specfier();
     if(res == 0)
     {
@@ -437,12 +497,13 @@ int Syntax::param()
                 temp = scanner.next();
                 if(temp.isDelimiter()&&temp.name == std::string("]"))
                 {
-                    addArray(pretemp.identifierAndIntPos,true);
+                    //addArray(pretemp.identifierAndIntPos,true);
                     return 0;   // 18 <param> := <type_specifier> ID [ ]
                 }
                 else
                 {
-                    addNum(pretemp.identifierAndIntPos,true);
+                    //addNum(pretemp.identifierAndIntPos,true);
+                    syntaxProcess.at(ori_process) = PROCESS_PARAM_1;
                     scanner.back();
                     scanner.back();
                     return 0;   // 17 <param> := <type_specifier> ID
@@ -450,13 +511,15 @@ int Syntax::param()
             }
             else
             {
-                addNum(pretemp.identifierAndIntPos,true);
+                //addNum(pretemp.identifierAndIntPos,true);
+                syntaxProcess.at(ori_process) = PROCESS_PARAM_1;
                 scanner.back();
                 return 0;   // 17 <param> := <type_specifier> ID
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -468,6 +531,7 @@ int Syntax::param()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -478,8 +542,10 @@ int Syntax::compound_stmt()
     #ifdef DEBUG
     printf("----------compound_stmt\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_COMPOUND_STMT);
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string("{"))
     {
@@ -496,6 +562,7 @@ int Syntax::compound_stmt()
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -507,18 +574,22 @@ int Syntax::compound_stmt()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
+
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -534,8 +605,10 @@ int Syntax::local_declarations()
     #ifdef DEBUG
     printf("----------local_declarations\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_1);
     res = var_declaration();
     if(res == 0)
     {
@@ -546,12 +619,16 @@ int Syntax::local_declarations()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_2);
             scanner.setIndex(ori_index);
             return 0;   // 21 <local_declarations> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_2);
         scanner.setIndex(ori_index);
         return 0;   // 21 <local_declarations> := <empty>
     }
@@ -562,8 +639,10 @@ int Syntax::local_declarations_tail()
     #ifdef DEBUG
     printf("----------local_declarations_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_1);
     res = var_declaration();
     if(res == 0)
     {
@@ -574,12 +653,16 @@ int Syntax::local_declarations_tail()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 23 <local_declarations_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 23 <local_declarations_tail> := <empty>
     }
@@ -590,8 +673,10 @@ int Syntax::statement_list()
     #ifdef DEBUG
     printf("----------statement_list\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_STATEMENT_LIST_1);
     res = statement();
     if(res == 0)
     {
@@ -602,12 +687,16 @@ int Syntax::statement_list()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_STATEMENT_LIST_2);
             scanner.setIndex(ori_index);
             return 0;   // 25 <statement_list> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_STATEMENT_LIST_2);
         scanner.setIndex(ori_index);
         return 0;   // 25 <statement_list> := <empty>
     }
@@ -618,8 +707,10 @@ int Syntax::statement_list_tail()
     #ifdef DEBUG
     printf("----------statement_list_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_1);
     res = statement();
     if(res == 0)
     {
@@ -630,12 +721,16 @@ int Syntax::statement_list_tail()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 27 <statement_list_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 27 <statement_list_tail> := <empty>
     }
@@ -646,8 +741,10 @@ int Syntax::statement()
     #ifdef DEBUG
     printf("----------statement\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_STATEMENT_1);
     res = expression_stmt();
     if(res == 0)
     {
@@ -655,6 +752,8 @@ int Syntax::statement()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_STATEMENT_2);
         scanner.setIndex(ori_index);
         res = compound_stmt();
         if(res == 0)
@@ -663,6 +762,8 @@ int Syntax::statement()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_STATEMENT_3);
             scanner.setIndex(ori_index);
             res = selection_stmt();
             if(res == 0)
@@ -671,6 +772,8 @@ int Syntax::statement()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                syntaxProcess.push_back(PROCESS_STATEMENT_4);
                 scanner.setIndex(ori_index);
                 res = iteration_stmt();
                 if(res == 0)
@@ -679,6 +782,8 @@ int Syntax::statement()
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    syntaxProcess.push_back(PROCESS_STATEMENT_5);
                     scanner.setIndex(ori_index);
                     res = return_stmt();
                     if(res == 0)
@@ -687,6 +792,7 @@ int Syntax::statement()
                     }
                     else
                     {
+                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         scanner.setIndex(ori_index);
                         return res;
                     }
@@ -701,8 +807,10 @@ int Syntax::expression_stmt()
     #ifdef DEBUG
     printf("----------expression_stmt\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_EXPRESSION_STMT_1);
     res = expression();
     if(res == 0)
     {
@@ -713,6 +821,8 @@ int Syntax::expression_stmt()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_EXPRESSION_STMT_2);
             scanner.setIndex(ori_index);
             Token temp = scanner.next();
             if(temp.isDelimiter()&&temp.name == std::string(";"))
@@ -721,6 +831,7 @@ int Syntax::expression_stmt()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -733,6 +844,8 @@ int Syntax::expression_stmt()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_EXPRESSION_STMT_2);
         scanner.setIndex(ori_index);
         Token temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == std::string(";"))
@@ -741,6 +854,7 @@ int Syntax::expression_stmt()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -757,8 +871,10 @@ int Syntax::selection_stmt()
     #ifdef DEBUG
     printf("----------selection_stmt\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_SELECTION_STMT_2);
     Token temp = scanner.next();
     if(temp.isKeyWord()&&temp.name == std::string("if"))
     {
@@ -768,7 +884,7 @@ int Syntax::selection_stmt()
             res = expression();
             if(res == 0)
             {
-                exIf();
+                //exIf();
                 temp = scanner.next();
                 if(temp.isDelimiter()&&temp.name == std::string(")"))
                 {
@@ -776,37 +892,44 @@ int Syntax::selection_stmt()
                     if(res == 0)
                     {
                         int another_index = scanner.curIndex;
+                        int another_process = syntaxProcess.size();
                         temp = scanner.next();
                         if(temp.isKeyWord()&&temp.name == std::string("else"))
                         {
-                            exEl();
+                            //exEl();
                             res = statement();
                             if(res == 0)
                             {
-                                exIe();
+                                //exIe();
                                 return 0;   // 36 <selection_stmt> := if ( <expression> ) <statement> else <statement>
                             }
                             else
                             {
+                                //exIe();
+                                while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                                syntaxProcess.at(ori_process) = PROCESS_SELECTION_STMT_1;
                                 scanner.setIndex(another_index);
                                 return 0;   // 35 <selection_stmt> := if ( <expression> ) <statement>
                             }
                         }
                         else
                         {
-                            exIe();
+                            //exIe();
+                            syntaxProcess.at(ori_process) = PROCESS_SELECTION_STMT_1;
                             scanner.back();
                             return 0;   // 35 <selection_stmt> := if ( <expression> ) <statement>
                         }
                     }
                     else
                     {
+                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         scanner.setIndex(ori_index);
                         return res;
                     }
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -818,12 +941,14 @@ int Syntax::selection_stmt()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -835,6 +960,7 @@ int Syntax::selection_stmt()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -850,12 +976,14 @@ int Syntax::iteration_stmt()
     #ifdef DEBUG
     printf("----------iteration_stmt\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_ITERATION_STMT);
     Token temp = scanner.next();
     if(temp.isKeyWord()&&temp.name == std::string("while"))
     {
-        exWh();
+        //exWh();
         temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == std::string("("))
         {
@@ -863,23 +991,25 @@ int Syntax::iteration_stmt()
             if(res == 0)
             {
                 temp = scanner.next();
-                exDo();
+                //exDo();
                 if(temp.isDelimiter()&&temp.name == std::string(")"))
                 {
                     res = statement();
                     if(res == 0)
                     {
-                        exWe();
+                        //exWe();
                         return 0;   // 37 <iteration_stmt> := while ( <expression> ) <statement>
                     }
                     else
                     {
+                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         scanner.setIndex(ori_index);
                         return res;
                     }
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -891,12 +1021,14 @@ int Syntax::iteration_stmt()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -908,6 +1040,7 @@ int Syntax::iteration_stmt()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -923,8 +1056,10 @@ int Syntax::return_stmt()
     #ifdef DEBUG
     printf("----------return_stmt\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_RETURN_STMT_1);
     Token temp = scanner.next();
     if(temp.isKeyWord()&&temp.name == std::string("return"))
     {
@@ -942,10 +1077,12 @@ int Syntax::return_stmt()
                 temp = scanner.next();
                 if(temp.isDelimiter()&&temp.name == std::string(";"))
                 {
+                    syntaxProcess.at(ori_process) = PROCESS_RETURN_STMT_2;
                     return 0;   // 39 <return_stmt> := return <expression> ;
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -957,6 +1094,7 @@ int Syntax::return_stmt()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -964,6 +1102,7 @@ int Syntax::return_stmt()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -979,8 +1118,10 @@ int Syntax::expression()
     #ifdef DEBUG
     printf("----------expression\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_EXPRESSION_1);
     res = var();
     if(res == 0)
     {
@@ -990,11 +1131,13 @@ int Syntax::expression()
             res = expression();
             if(res == 0)
             {
-                alGeq("=");
+                //alGeq("=");
                 return 0;   // 40 <expression> := <var> = <expression>
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                syntaxProcess.push_back(PROCESS_EXPRESSION_2);
                 scanner.setIndex(ori_index);
                 res = simple_expression();
                 if(res == 0)
@@ -1003,6 +1146,7 @@ int Syntax::expression()
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     scanner.setIndex(ori_index);
                     return res;
                 }
@@ -1010,6 +1154,8 @@ int Syntax::expression()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_EXPRESSION_2);
             scanner.setIndex(ori_index);
             res = simple_expression();
             if(res == 0)
@@ -1018,6 +1164,7 @@ int Syntax::expression()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -1025,6 +1172,8 @@ int Syntax::expression()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_EXPRESSION_2);
         scanner.setIndex(ori_index);
         res = simple_expression();
         if(res == 0)
@@ -1033,6 +1182,7 @@ int Syntax::expression()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
@@ -1044,13 +1194,16 @@ int Syntax::var()
     #ifdef DEBUG
     printf("----------var\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_VAR_2);
     Token temp = scanner.next(),pretemp;
     if(temp.isIdentifier())
     {
         pretemp=temp;
         int another_index = scanner.curIndex;
+        int another_process = syntaxProcess.size();
         temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == "[")
         {
@@ -1060,32 +1213,38 @@ int Syntax::var()
                 temp = scanner.next();
                 if(temp.isDelimiter()&&temp.name == "]")
                 {
-                    alPush(pretemp.identifierAndIntPos,true);
+                    //alPush(pretemp.identifierAndIntPos,true);
                     return 0;   // 43 <var> := ID [ <expression> ]
                 }
                 else
                 {
-                    alPush(pretemp.identifierAndIntPos);
+                    //alPush(pretemp.identifierAndIntPos);
+                    while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                    syntaxProcess.at(ori_process) = PROCESS_VAR_1;
                     scanner.setIndex(another_index);
                     return 0;   // 42 <var> := ID
                 }
             }
             else
             {
-                alPush(pretemp.identifierAndIntPos);
+                //alPush(pretemp.identifierAndIntPos);
+                while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                syntaxProcess.at(ori_process) = PROCESS_VAR_1;
                 scanner.setIndex(another_index);
                 return 0;   // 42 <var> := ID
             }
         }
         else
         {
-            alPush(pretemp.identifierAndIntPos);
+            //alPush(pretemp.identifierAndIntPos);
+            syntaxProcess.at(ori_process) = PROCESS_VAR_1;
             scanner.back();
             return 0;   // 42 <var> := ID
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1101,12 +1260,15 @@ int Syntax::simple_expression()
     #ifdef DEBUG
     printf("----------simple_expression\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_SIMPLE_EXPRESSION_1);
     res = additive_expression();
     if(res == 0)
     {
         int another_index = scanner.curIndex;
+        int another_process = syntaxProcess.size();
         res = relop();
         if(res == 0)
         {
@@ -1115,23 +1277,28 @@ int Syntax::simple_expression()
             res = additive_expression();
             if(res == 0)
             {
-                alGeq(temp.name);
+                //alGeq(temp.name);
                 return 0;   // 44 <simple_expression> := <additive_expression> <relop> <additive_expression>
             }
             else
             {
+                while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                syntaxProcess.at(ori_process) = PROCESS_SIMPLE_EXPRESSION_2;
                 scanner.setIndex(another_index);
                 return 0;   // 45 <simple_expression> := <additive_expression>
             }
         }
         else
         {
+            while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+            syntaxProcess.at(ori_process) = PROCESS_SIMPLE_EXPRESSION_2;
             scanner.setIndex(another_index);
             return 0;   // 45 <simple_expression> := <additive_expression>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1142,8 +1309,10 @@ int Syntax::additive_expression()
     #ifdef DEBUG
     printf("----------additive_expression\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION);
     res = term();
     if(res == 0)
     {
@@ -1154,12 +1323,14 @@ int Syntax::additive_expression()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1170,8 +1341,10 @@ int Syntax::additive_expression_tail()
     #ifdef DEBUG
     printf("----------additive_expression_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_1);
     res = addop();
     if(res == 0)
     {
@@ -1183,23 +1356,29 @@ int Syntax::additive_expression_tail()
             res = additive_expression_tail();
             if(res == 0)
             {
-                alGeq(temp.name);
+                //alGeq(temp.name);
                 return 0;   // 53 <additive_expression_tail> := <addop> <term> <additive_expression_tail>
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
                 scanner.setIndex(ori_index);
                 return 0;   // 54 <additive_expression_tail> := <empty>
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 54 <additive_expression_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 54 <additive_expression_tail> := <empty>
     }
@@ -1213,26 +1392,32 @@ int Syntax::relop()
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string("<="))
     {
+        syntaxProcess.push_back(PROCESS_RELOP_1);
         return 0;   // 46 <relop> := <=
     }
     else if(temp.isDelimiter()&&temp.name == std::string("<"))
     {
+        syntaxProcess.push_back(PROCESS_RELOP_2);
         return 0;   // 47 <relop> := <
     }
     else if(temp.isDelimiter()&&temp.name == std::string(">"))
     {
+        syntaxProcess.push_back(PROCESS_RELOP_3);
         return 0;   // 48 <relop> := >
     }
     else if(temp.isDelimiter()&&temp.name == std::string(">="))
     {
+        syntaxProcess.push_back(PROCESS_RELOP_4);
         return 0;   // 49 <relop> := >=
     }
     else if(temp.isDelimiter()&&temp.name == std::string("=="))
     {
+        syntaxProcess.push_back(PROCESS_RELOP_5);
         return 0;   // 50 <relop> := ==
     }
     else if(temp.isDelimiter()&&temp.name == std::string("!="))
     {
+        syntaxProcess.push_back(PROCESS_RELOP_6);
         return 0;   // 51 <relop> := !=
     }
     else
@@ -1252,8 +1437,10 @@ int Syntax::term()
     #ifdef DEBUG
     printf("----------term\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_TERM);
     res = factor();
     if(res == 0)
     {
@@ -1264,12 +1451,14 @@ int Syntax::term()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1280,8 +1469,10 @@ int Syntax::term_tail()
     #ifdef DEBUG
     printf("----------term_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_TERM_TAIL_1);
     res = mulop();
     if(res == 0)
     {
@@ -1290,17 +1481,21 @@ int Syntax::term_tail()
         res = factor();
         if(res == 0)
         {
-            alGeq(temp.name);
+            //alGeq(temp.name);
             return 0;   // 58 <term_tail> := <mulop> <factor>
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 59 <term_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 59 <term_tail> := <empty>
     }
@@ -1314,10 +1509,12 @@ int Syntax::addop()
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string("+"))
     {
+        syntaxProcess.push_back(PROCESS_ADDOP_1);
         return 0;   // 55 <addop> := +
     }
     else if(temp.isDelimiter()&&temp.name == std::string("-"))
     {
+        syntaxProcess.push_back(PROCESS_ADDOP_2);
         return 0;   // 56 <addop> := -
     }
     else
@@ -1337,8 +1534,10 @@ int Syntax::factor()
     #ifdef DEBUG
     printf("----------factor\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_FACTOR_1);
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string("("))
     {
@@ -1352,6 +1551,7 @@ int Syntax::factor()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -1363,18 +1563,22 @@ int Syntax::factor()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else if(temp.isInt())
     {
-        addCon(temp.identifierAndIntPos,temp.valueInt);
-        alPush(temp.identifierAndIntPos);
+        //addCon(temp.identifierAndIntPos,temp.valueInt);
+        //alPush(temp.identifierAndIntPos);
+        syntaxProcess.at(ori_process) = PROCESS_FACTOR_4;
         return 0;   // 65 <factor> := NUM
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_FACTOR_3);
         scanner.setIndex(ori_index);
         res = call();
         if(res == 0)
@@ -1383,6 +1587,8 @@ int Syntax::factor()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_FACTOR_2);
             scanner.setIndex(ori_index);
             res = var();
             if(res == 0)
@@ -1391,6 +1597,7 @@ int Syntax::factor()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -1406,10 +1613,12 @@ int Syntax::mulop()
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string("*"))
     {
+        syntaxProcess.push_back(PROCESS_MULOP_1);
         return 0;   // 60 <mulop> := *
     }
     else if(temp.isDelimiter()&&temp.name == std::string("/"))
     {
+        syntaxProcess.push_back(PROCESS_MULOP_2);
         return 0;   // 61 <mulop> := /
     }
     else
@@ -1429,8 +1638,10 @@ int Syntax::call()
     #ifdef DEBUG
     printf("----------call\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_CALL);
     Token temp = scanner.next(),pretemp;
     if(temp.isIdentifier())
     {
@@ -1438,18 +1649,19 @@ int Syntax::call()
         temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == std::string("("))
         {
-            callBegin(pretemp.identifierAndIntPos);
+            //callBegin(pretemp.identifierAndIntPos);
             res = args();
             if(res == 0)
             {
                 temp = scanner.next();
                 if(temp.isDelimiter()&&temp.name == std::string(")"))
                 {
-                    callEnd();
+                    //callEnd();
                     return 0;   // 66 <call> := ID ( <args> )
                 }
                 else
                 {
+                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -1461,12 +1673,14 @@ int Syntax::call()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -1478,6 +1692,7 @@ int Syntax::call()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1493,8 +1708,10 @@ int Syntax::args()
     #ifdef DEBUG
     printf("----------args\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_ARGS_1);
     res = arg_list();
     if(res == 0)
     {
@@ -1502,6 +1719,8 @@ int Syntax::args()
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_ARGS_2);
         scanner.setIndex(ori_index);
         return 0;   // 68 <args> := <empty>
     }
@@ -1512,12 +1731,14 @@ int Syntax::arg_list()
     #ifdef DEBUG
     printf("----------arg_list\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_ARG_LIST);
     res = expression();
     if(res == 0)
     {
-        callParam();
+        //callParam();
         res = arg_list_tail();
         if(res == 0)
         {
@@ -1525,12 +1746,14 @@ int Syntax::arg_list()
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1541,15 +1764,17 @@ int Syntax::arg_list_tail()
     #ifdef DEBUG
     printf("----------arg_list_tail\n");
     #endif
-    int res, ori_index;
+    int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_1);
     Token temp = scanner.next();
     if(temp.isDelimiter()&&temp.name == std::string(","))
     {
         res = expression();
         if(res == 0)
         {
-            callParam();
+            //callParam();
             res = arg_list_tail();
             if(res == 0)
             {
@@ -1557,18 +1782,24 @@ int Syntax::arg_list_tail()
             }
             else
             {
+                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
                 return 0;   // 71 <arg_list_tail> := <empty>
             }
         }
         else
         {
+            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 71 <arg_list_tail> := <empty>
         }
     }
     else
     {
+        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 71 <arg_list_tail> := <empty>
     }
