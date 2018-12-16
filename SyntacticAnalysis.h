@@ -83,9 +83,12 @@ class Syntax
         int errPos;                     // 错误位置
         std::string errMessage;         // 错误原因
         std::vector<int> syntaxProcess; // 推导过程
+        int processIndex;               // 推导过程标记
 
         Syntax();
         Syntax(Scan scanner);
+
+        void prepare_for_4elem();
         
         int program();
         int declaration_list();

@@ -6,6 +6,7 @@ Syntax::Syntax()
     errPos = -1;
     errMessage = "";
     syntaxProcess.clear();
+    processIndex = 0;
 }
 
 Syntax::Syntax(Scan scanner)
@@ -13,7 +14,460 @@ Syntax::Syntax(Scan scanner)
     errPos = -1;
     errMessage = "";
     syntaxProcess.clear();
+    processIndex = 0;
     this->scanner = scanner;
+}
+
+void Syntax::prepare_for_4elem()
+{
+    switch(syntaxProcess.at(processIndex++))
+    {
+        case PROCESS_PROGRAM:
+            {
+                initAll();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_DECLARATION_LIST:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_DECLARATION_LIST_TAIL_1:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_DECLARATION_LIST_TAIL_2:
+            {
+                return;
+            }
+        case PROCESS_DECLARATION_1:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_DECLARATION_2:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_VAR_DECLARATION_1:
+            {
+                prepare_for_4elem();
+                Token id = scanner.next();
+                scanner.next();
+                addNum(id.identifierAndIntPos);
+                return;
+            }
+        case PROCESS_VAR_DECLARATION_2:
+            {
+                prepare_for_4elem();
+                Token id = scanner.next();
+                scanner.next();
+                Token num = scanner.next();
+                addArray(id.identifierAndIntPos, num.valueInt);
+                scanner.next();
+                scanner.next();
+                return;
+            }
+        case PROCESS_TYPE_SPECFIER_1:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_TYPE_SPECFIER_2:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_FUN_DECLARATION:
+            {
+                prepare_for_4elem();
+                Token fun = scanner.next();
+                addFun(fun.identifierAndIntPos);
+                scanner.next();
+                prepare_for_4elem();
+                scanner.next();
+                prepare_for_4elem();
+                backFun();
+                return;
+            }
+        case PROCESS_PARAMS_1:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_PARAMS_2:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_PARAM_LIST:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_PARAM_LIST_TAIL_1:
+            {
+                scanner.next();
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_PARAM_LIST_TAIL_2:
+            {
+                return;
+            }
+        case PROCESS_PARAM_1:
+            {
+                prepare_for_4elem();
+                Token id = scanner.next();
+                addNum(id.identifierAndIntPos, true);
+                return;
+            }
+        case PROCESS_PARAM_2:
+            {
+                prepare_for_4elem();
+                Token id = scanner.next();
+                addArray(id.identifierAndIntPos, true);
+                return;
+            }
+        case PROCESS_COMPOUND_STMT:
+            {
+                scanner.next();
+                prepare_for_4elem();
+                prepare_for_4elem();
+                scanner.next();
+                return;
+            }
+        case PROCESS_LOCAL_DECLARATIONS_1:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_LOCAL_DECLARATIONS_2:
+            {
+                return;
+            }
+        case PROCESS_LOCAL_DECLARATIONS_TAIL_1:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_LOCAL_DECLARATIONS_TAIL_2:
+            {
+                return;
+            }
+        case PROCESS_STATEMENT_LIST_1:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_LIST_2:
+            {
+                return;
+            }
+        case PROCESS_STATEMENT_LIST_TAIL_1:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_LIST_TAIL_2:
+            {
+                return;
+            }
+        case PROCESS_STATEMENT_1:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_2:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_3:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_4:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_5:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_EXPRESSION_STMT_1:
+            {
+                prepare_for_4elem();
+                scanner.next();
+                return;
+            }
+        case PROCESS_EXPRESSION_STMT_2:
+            {
+                scanner.next();
+            }
+        case PROCESS_SELECTION_STMT_1:
+            {
+                scanner.next();
+                scanner.next();
+                prepare_for_4elem();
+                exIf();
+                scanner.next();
+                prepare_for_4elem();
+                exIe();
+                return;
+            }
+        case PROCESS_SELECTION_STMT_2:
+            {
+                scanner.next();
+                scanner.next();
+                prepare_for_4elem();
+                exIf();
+                scanner.next();
+                prepare_for_4elem();
+                scanner.next();
+                exEl();
+                prepare_for_4elem();
+                exIe();
+                return;
+            }
+        case PROCESS_ITERATION_STMT:
+            {
+                scanner.next();
+                exWh();
+                scanner.next();
+                prepare_for_4elem();
+                exDo();
+                scanner.next();
+                prepare_for_4elem();
+                exWe();
+                return;
+            }
+        case PROCESS_RETURN_STMT_1:
+            {
+                scanner.next();
+                scanner.next();
+                return;
+            }
+        case PROCESS_RETURN_STMT_2:
+            {
+                scanner.next();
+                prepare_for_4elem();
+                scanner.next();
+                return;
+            }
+        case PROCESS_EXPRESSION_1:
+            {
+                prepare_for_4elem();
+                scanner.next();
+                prepare_for_4elem();
+                alGeq("=");
+                return;
+            }
+        case PROCESS_EXPRESSION_2:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_VAR_1:
+            {
+                Token id = scanner.next();
+                alPush(id.identifierAndIntPos);
+                return;
+            }
+        case PROCESS_VAR_2:
+            {
+                Token id = scanner.next();
+                scanner.next();
+                prepare_for_4elem();
+                scanner.next();
+                alPush(id.identifierAndIntPos);
+                return;
+            }
+        case PROCESS_SIMPLE_EXPRESSION_1:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                scanner.back();
+                Token op = scanner.next();
+                prepare_for_4elem();
+                alGeq(op.name);
+                return;
+            }
+        case PROCESS_SIMPLE_EXPRESSION_2:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_RELOP_1:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_RELOP_2:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_RELOP_3:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_RELOP_4:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_RELOP_5:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_RELOP_6:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_ADDITIVE_EXPRESSION:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_ADDITIVE_EXPRESSION_TAIL_1:
+            {
+                prepare_for_4elem();
+                scanner.back();
+                Token op = scanner.next();
+                prepare_for_4elem();
+                prepare_for_4elem();
+                alGeq(op.name);
+                return;
+            }
+        case PROCESS_ADDITIVE_EXPRESSION_TAIL_2:
+            {
+                return;
+            }
+        case PROCESS_ADDOP_1:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_ADDOP_2:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_TERM:
+            {
+                prepare_for_4elem();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_TERM_TAIL_1:
+            {
+                prepare_for_4elem();
+                scanner.back();
+                Token op = scanner.next();
+                prepare_for_4elem();
+                alGeq(op.name);
+                return;
+            }
+        case PROCESS_TERM_TAIL_2:
+            {
+                return;
+            }
+        case PROCESS_MULOP_1:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_MULOP_2:
+            {
+                scanner.next();
+                return;
+            }
+        case PROCESS_FACTOR_1:
+            {
+                scanner.next();
+                prepare_for_4elem();
+                scanner.next();
+                return;
+            }
+        case PROCESS_FACTOR_2:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_FACTOR_3:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_FACTOR_4:
+            {
+                Token num = scanner.next();
+                addCon(num.identifierAndIntPos, num.valueInt);
+                alPush(num.identifierAndIntPos);
+                return;
+            }
+        case PROCESS_CALL:
+            {
+                Token id = scanner.next();
+                scanner.next();
+                callBegin(id.identifierAndIntPos);
+                prepare_for_4elem();
+                scanner.next();
+                callEnd();
+                return;
+            }
+        case PROCESS_ARGS_1:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_ARGS_2:
+            {
+                return;
+            }
+        case PROCESS_ARG_LIST:
+            {
+                prepare_for_4elem();
+                callParam();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_ARG_LIST_TAIL_1:
+            {
+                scanner.next();
+                prepare_for_4elem();
+                callParam();
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_ARG_LIST_TAIL_2:
+            {
+                return;
+            }
+        default:
+            {
+                return;
+            }
+    }
 }
 
 int Syntax::program()
@@ -33,7 +487,7 @@ int Syntax::program()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -58,14 +512,14 @@ int Syntax::declaration_list()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -90,7 +544,7 @@ int Syntax::declaration_list_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 4 <declaration_list_tail> := <empty>
@@ -98,7 +552,7 @@ int Syntax::declaration_list_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 4 <declaration_list_tail> := <empty>
@@ -121,7 +575,7 @@ int Syntax::declaration()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_DECLARATION_2);
         scanner.setIndex(ori_index);
         res = fun_declaration();
@@ -131,7 +585,7 @@ int Syntax::declaration()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
@@ -177,7 +631,7 @@ int Syntax::var_declaration()
                         }
                         else
                         {
-                            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                             if(scanner.curIndex - 1 > errPos)
                             {
                                 errPos = scanner.curIndex - 1;
@@ -189,7 +643,7 @@ int Syntax::var_declaration()
                     }
                     else
                     {
-                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         if(scanner.curIndex - 1 > errPos)
                         {
                             errPos = scanner.curIndex - 1;
@@ -201,7 +655,7 @@ int Syntax::var_declaration()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -213,7 +667,7 @@ int Syntax::var_declaration()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -225,7 +679,7 @@ int Syntax::var_declaration()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -237,7 +691,7 @@ int Syntax::var_declaration()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -276,7 +730,7 @@ int Syntax::fun_declaration()
                         }
                         else
                         {
-                            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                             scanner.setIndex(ori_index);
                             return res;
                         }
@@ -284,7 +738,7 @@ int Syntax::fun_declaration()
                     }
                     else
                     {
-                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         if(scanner.curIndex - 1 > errPos)
                         {
                             errPos = scanner.curIndex - 1;
@@ -296,14 +750,14 @@ int Syntax::fun_declaration()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     scanner.setIndex(ori_index);
                     return res;
                 }
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -315,7 +769,7 @@ int Syntax::fun_declaration()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -327,7 +781,7 @@ int Syntax::fun_declaration()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -354,7 +808,7 @@ int Syntax::type_specfier()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return -1;
     }
@@ -368,7 +822,7 @@ int Syntax::params()
     int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
     ori_process = syntaxProcess.size();
-    syntaxProcess.push_back(PROCESS_TYPE_SPECFIER_1);
+    syntaxProcess.push_back(PROCESS_PARAMS_1);
     res = param_list();
     if(res == 0)
     {
@@ -376,7 +830,7 @@ int Syntax::params()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_PARAMS_2);
         scanner.setIndex(ori_index);
         Token temp = scanner.next();
@@ -386,7 +840,7 @@ int Syntax::params()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -417,14 +871,14 @@ int Syntax::param_list()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -452,7 +906,7 @@ int Syntax::param_list_tail()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
                 return 0;   // 16 <parm_list_tail> := <empty>
@@ -460,7 +914,7 @@ int Syntax::param_list_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 16 <parm_list_tail> := <empty>
@@ -468,7 +922,7 @@ int Syntax::param_list_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 16 <parm_list_tail> := <empty>
@@ -519,7 +973,7 @@ int Syntax::param()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -531,7 +985,7 @@ int Syntax::param()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -562,7 +1016,7 @@ int Syntax::compound_stmt()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -574,7 +1028,7 @@ int Syntax::compound_stmt()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -582,14 +1036,14 @@ int Syntax::compound_stmt()
         else
         {
 
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -619,7 +1073,7 @@ int Syntax::local_declarations()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_2);
             scanner.setIndex(ori_index);
             return 0;   // 21 <local_declarations> := <empty>
@@ -627,7 +1081,7 @@ int Syntax::local_declarations()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_2);
         scanner.setIndex(ori_index);
         return 0;   // 21 <local_declarations> := <empty>
@@ -653,7 +1107,7 @@ int Syntax::local_declarations_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 23 <local_declarations_tail> := <empty>
@@ -661,7 +1115,7 @@ int Syntax::local_declarations_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 23 <local_declarations_tail> := <empty>
@@ -687,7 +1141,7 @@ int Syntax::statement_list()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_STATEMENT_LIST_2);
             scanner.setIndex(ori_index);
             return 0;   // 25 <statement_list> := <empty>
@@ -695,7 +1149,7 @@ int Syntax::statement_list()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_STATEMENT_LIST_2);
         scanner.setIndex(ori_index);
         return 0;   // 25 <statement_list> := <empty>
@@ -721,7 +1175,7 @@ int Syntax::statement_list_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 27 <statement_list_tail> := <empty>
@@ -729,7 +1183,7 @@ int Syntax::statement_list_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 27 <statement_list_tail> := <empty>
@@ -752,7 +1206,7 @@ int Syntax::statement()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_STATEMENT_2);
         scanner.setIndex(ori_index);
         res = compound_stmt();
@@ -762,7 +1216,7 @@ int Syntax::statement()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_STATEMENT_3);
             scanner.setIndex(ori_index);
             res = selection_stmt();
@@ -772,7 +1226,7 @@ int Syntax::statement()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_STATEMENT_4);
                 scanner.setIndex(ori_index);
                 res = iteration_stmt();
@@ -782,7 +1236,7 @@ int Syntax::statement()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     syntaxProcess.push_back(PROCESS_STATEMENT_5);
                     scanner.setIndex(ori_index);
                     res = return_stmt();
@@ -792,7 +1246,7 @@ int Syntax::statement()
                     }
                     else
                     {
-                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         scanner.setIndex(ori_index);
                         return res;
                     }
@@ -821,7 +1275,7 @@ int Syntax::expression_stmt()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_EXPRESSION_STMT_2);
             scanner.setIndex(ori_index);
             Token temp = scanner.next();
@@ -831,7 +1285,7 @@ int Syntax::expression_stmt()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -844,7 +1298,7 @@ int Syntax::expression_stmt()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_EXPRESSION_STMT_2);
         scanner.setIndex(ori_index);
         Token temp = scanner.next();
@@ -854,7 +1308,7 @@ int Syntax::expression_stmt()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -906,7 +1360,7 @@ int Syntax::selection_stmt()
                             else
                             {
                                 //exIe();
-                                while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                                while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                                 syntaxProcess.at(ori_process) = PROCESS_SELECTION_STMT_1;
                                 scanner.setIndex(another_index);
                                 return 0;   // 35 <selection_stmt> := if ( <expression> ) <statement>
@@ -922,14 +1376,14 @@ int Syntax::selection_stmt()
                     }
                     else
                     {
-                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         scanner.setIndex(ori_index);
                         return res;
                     }
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -941,14 +1395,14 @@ int Syntax::selection_stmt()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -960,7 +1414,7 @@ int Syntax::selection_stmt()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1002,14 +1456,14 @@ int Syntax::iteration_stmt()
                     }
                     else
                     {
-                        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                         scanner.setIndex(ori_index);
                         return res;
                     }
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -1021,14 +1475,14 @@ int Syntax::iteration_stmt()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -1040,7 +1494,7 @@ int Syntax::iteration_stmt()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1082,7 +1536,7 @@ int Syntax::return_stmt()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -1094,7 +1548,7 @@ int Syntax::return_stmt()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -1102,7 +1556,7 @@ int Syntax::return_stmt()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1136,7 +1590,7 @@ int Syntax::expression()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_EXPRESSION_2);
                 scanner.setIndex(ori_index);
                 res = simple_expression();
@@ -1146,7 +1600,7 @@ int Syntax::expression()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     scanner.setIndex(ori_index);
                     return res;
                 }
@@ -1154,7 +1608,7 @@ int Syntax::expression()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_EXPRESSION_2);
             scanner.setIndex(ori_index);
             res = simple_expression();
@@ -1164,7 +1618,7 @@ int Syntax::expression()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -1172,7 +1626,7 @@ int Syntax::expression()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_EXPRESSION_2);
         scanner.setIndex(ori_index);
         res = simple_expression();
@@ -1182,7 +1636,7 @@ int Syntax::expression()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
@@ -1219,7 +1673,7 @@ int Syntax::var()
                 else
                 {
                     //alPush(pretemp.identifierAndIntPos);
-                    while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                     syntaxProcess.at(ori_process) = PROCESS_VAR_1;
                     scanner.setIndex(another_index);
                     return 0;   // 42 <var> := ID
@@ -1228,7 +1682,7 @@ int Syntax::var()
             else
             {
                 //alPush(pretemp.identifierAndIntPos);
-                while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                 syntaxProcess.at(ori_process) = PROCESS_VAR_1;
                 scanner.setIndex(another_index);
                 return 0;   // 42 <var> := ID
@@ -1244,7 +1698,7 @@ int Syntax::var()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1282,7 +1736,7 @@ int Syntax::simple_expression()
             }
             else
             {
-                while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                 syntaxProcess.at(ori_process) = PROCESS_SIMPLE_EXPRESSION_2;
                 scanner.setIndex(another_index);
                 return 0;   // 45 <simple_expression> := <additive_expression>
@@ -1290,7 +1744,7 @@ int Syntax::simple_expression()
         }
         else
         {
-            while(syntaxProcess.size() > another_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
             syntaxProcess.at(ori_process) = PROCESS_SIMPLE_EXPRESSION_2;
             scanner.setIndex(another_index);
             return 0;   // 45 <simple_expression> := <additive_expression>
@@ -1298,7 +1752,7 @@ int Syntax::simple_expression()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1323,14 +1777,14 @@ int Syntax::additive_expression()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1361,7 +1815,7 @@ int Syntax::additive_expression_tail()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
                 scanner.setIndex(ori_index);
                 return 0;   // 54 <additive_expression_tail> := <empty>
@@ -1369,7 +1823,7 @@ int Syntax::additive_expression_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 54 <additive_expression_tail> := <empty>
@@ -1377,7 +1831,7 @@ int Syntax::additive_expression_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 54 <additive_expression_tail> := <empty>
@@ -1451,14 +1905,14 @@ int Syntax::term()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1486,7 +1940,7 @@ int Syntax::term_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 59 <term_tail> := <empty>
@@ -1494,7 +1948,7 @@ int Syntax::term_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 59 <term_tail> := <empty>
@@ -1551,7 +2005,7 @@ int Syntax::factor()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
@@ -1563,7 +2017,7 @@ int Syntax::factor()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
@@ -1577,7 +2031,7 @@ int Syntax::factor()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_FACTOR_3);
         scanner.setIndex(ori_index);
         res = call();
@@ -1587,7 +2041,7 @@ int Syntax::factor()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_FACTOR_2);
             scanner.setIndex(ori_index);
             res = var();
@@ -1597,7 +2051,7 @@ int Syntax::factor()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
@@ -1661,7 +2115,7 @@ int Syntax::call()
                 }
                 else
                 {
-                    while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
@@ -1673,14 +2127,14 @@ int Syntax::call()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 scanner.setIndex(ori_index);
                 return res;
             }
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
@@ -1692,7 +2146,7 @@ int Syntax::call()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
@@ -1719,7 +2173,7 @@ int Syntax::args()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ARGS_2);
         scanner.setIndex(ori_index);
         return 0;   // 68 <args> := <empty>
@@ -1746,14 +2200,14 @@ int Syntax::arg_list()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             scanner.setIndex(ori_index);
             return res;
         }
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         scanner.setIndex(ori_index);
         return res;
     }
@@ -1782,7 +2236,7 @@ int Syntax::arg_list_tail()
             }
             else
             {
-                while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
                 return 0;   // 71 <arg_list_tail> := <empty>
@@ -1790,7 +2244,7 @@ int Syntax::arg_list_tail()
         }
         else
         {
-            while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
             scanner.setIndex(ori_index);
             return 0;   // 71 <arg_list_tail> := <empty>
@@ -1798,7 +2252,7 @@ int Syntax::arg_list_tail()
     }
     else
     {
-        while(syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
         scanner.setIndex(ori_index);
         return 0;   // 71 <arg_list_tail> := <empty>
