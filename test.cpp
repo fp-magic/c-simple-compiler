@@ -100,9 +100,11 @@ int main(void)
         // 重置下个 Token 位置，在已确定的语法分析过程中生成四元式
         syn.scanner.curIndex = 0;
         syn.prepare_for_4elem();
-
+        
         // 输出四元式
         gen4elem();
+        genValls();
+        outputParam();
     }
     else
     {

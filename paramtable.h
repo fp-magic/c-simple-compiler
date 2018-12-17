@@ -13,9 +13,11 @@ using namespace std;
 /*
 通过符号表可以很好的指定每个变量在内存中的位置
 to-do list：
-四元式生成
-alpush特殊处理
+return处理
+alpush数组处理
 增加数据类型
+优化：除去未使用变量
+优化：及时清除已使用临时变量
 */
 struct synbl{
     int name;
@@ -30,6 +32,7 @@ struct pfinfl{
     int level,off,fn;
     vector<int>param;
     vector<int>synbs;
+    vector<int>elems;
     int entry;
 };
 struct consl{
@@ -47,6 +50,12 @@ struct elem{
     }
     string st;
     int id1,id2,id0;
+};
+struct vall{
+    map<int,int>var;
+    map<int,int>par;
+    int size;
+    int retaddr;
 };
 void initAll();
 void addFun(int id);
@@ -67,4 +76,7 @@ void callBegin(int id);
 void callEnd();
 void callParam();
 void gen4elem();
+void genValls();
+void outputParam();
+void genAssembly();
 #endif // PARAMTABLE_H_INCLUDED
