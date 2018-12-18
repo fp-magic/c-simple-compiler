@@ -218,6 +218,7 @@ void Syntax::prepare_for_4elem()
         case PROCESS_EXPRESSION_STMT_2:
             {
                 scanner.next();
+                return;
             }
         case PROCESS_SELECTION_STMT_1:
             {

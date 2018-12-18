@@ -15,12 +15,26 @@ Scan::Scan(std::string filename)
         errPos = 0;
         return;
     }
-    char ch, token[100];
+    char ch, token[5000];
     int stateCur, stateBefore, tokenLen;
     tokenLen = 0;
     stateCur = STATE_BEGIN;
     while((ch = getc(fp)) != EOF)
     {
+        linePos++;
+        if(stateCur != STATE_COMMENT_S&&stateCur != STATE_COMMENT_S_END_MAYBE&&stateCur != STATE_COMMENT_S_END)
+            oldLine = line;
+        if(ch == '\n')
+        {
+            line++;
+            oldLinePos = linePos;
+            linePos = 0;
+        }
+        else
+        {
+            oldLinePos = linePos;
+        }
+
         stateBefore = stateCur;
         stateCur = stateChange(stateBefore, ch);
         if(stateCur > 0)
@@ -69,7 +83,7 @@ void Scan::initFrom(std::string plainText)
         return;
     }
     plainText.append("\n");
-    char ch, token[100];
+    char ch, token[5000];
     int stateCur, stateBefore, tokenLen, cnt;
     tokenLen = 0;
     cnt = 0;
@@ -77,6 +91,21 @@ void Scan::initFrom(std::string plainText)
     while(cnt < (int)plainText.size())
     {
         ch = plainText.at(cnt++);
+
+        linePos++;
+        if(stateCur != STATE_COMMENT_S&&stateCur != STATE_COMMENT_S_END_MAYBE&&stateCur != STATE_COMMENT_S_END)
+            oldLine = line;
+        if(ch == '\n')
+        {
+            line++;
+            oldLinePos = linePos;
+            linePos = 0;
+        }
+        else
+        {
+            oldLinePos = linePos;
+        }
+
         stateBefore = stateCur;
         stateCur = stateChange(stateBefore, ch);
         if(stateCur > 0)
@@ -152,6 +181,8 @@ void Scan::initTable()
     tokens.clear();
 
     errPos = -1;
+    line = 0;
+    linePos = 0;
     curIndex = 0;
 }
 
@@ -222,6 +253,8 @@ int Scan::stateChange(int stateBefore, char ch)
             {
                 if(ch == '/')
                     return STATE_COMMENT_S_END;
+                if(ch == '*')
+                    return STATE_COMMENT_S_END_MAYBE;
                 else
                     return STATE_COMMENT_S;
             }
@@ -232,7 +265,7 @@ int Scan::stateChange(int stateBefore, char ch)
         case STATE_COMMENT:
             {
                 if(ch == '\n')
-                    return STATE_COMMENT_END;
+                    return STATE_END;
                 else
                     return STATE_COMMENT;
             }
@@ -315,19 +348,19 @@ void Scan::parseState(int stateBefore, char *token)
                 {
                     if(!strcmp(token, keyWordTable[i].c_str()))
                     {
-                        tokens.push_back(Token(TOKEN_TYPE_KEYWORD, std::string(token), i));
+                        tokens.push_back(Token(TOKEN_TYPE_KEYWORD, std::string(token), i, oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                         return;
                     }
                 }
                 auto it = std::find(identifierTable.begin(), identifierTable.end(), std::string(token));
                 if(it == identifierTable.end())
                 {
-                    tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), identifierTable.size()));
+                    tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), identifierTable.size(), oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                     identifierTable.push_back(std::string(token));
                 }
                 else
                 {
-                    tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), it-identifierTable.begin()));
+                    tokens.push_back(Token(TOKEN_TYPE_IDENTIFIER, std::string(token), it-identifierTable.begin(), oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                 }
                 return;
             }
@@ -337,7 +370,7 @@ void Scan::parseState(int stateBefore, char *token)
                 {
                     if(!strcmp(token, delimiterTable[i].c_str()))
                     {
-                        tokens.push_back(Token(TOKEN_TYPE_DELIMITER, std::string(token), i));
+                        tokens.push_back(Token(TOKEN_TYPE_DELIMITER, std::string(token), i, oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                         return;
                     }
                 }
@@ -347,31 +380,31 @@ void Scan::parseState(int stateBefore, char *token)
             }
         case STATE_INT:
             {
-                tokens.push_back(Token(TOKEN_TYPE_INT, std::string(token), intTable.size()));
+                tokens.push_back(Token(TOKEN_TYPE_INT, std::string(token), intTable.size(), oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                 intTable.push_back(std::string(token));
                 return;
             }
         case STATE_FLOAT:
             {
-                tokens.push_back(Token(TOKEN_TYPE_FLOAT, std::string(token), floatTable.size()));
+                tokens.push_back(Token(TOKEN_TYPE_FLOAT, std::string(token), floatTable.size(), oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                 floatTable.push_back(std::string(token));
                 return;
-            } 
+            }
         case STATE_CHAR_R:
             {
-                tokens.push_back(Token(TOKEN_TYPE_CHAR, std::string(token), charTable.size()));
+                tokens.push_back(Token(TOKEN_TYPE_CHAR, std::string(token), charTable.size(), oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                 charTable.push_back(std::string(token));
                 return;
             }
         case STATE_STR_R:
             {
-                tokens.push_back(Token(TOKEN_TYPE_STR, std::string(token), strTable.size()));
+                tokens.push_back(Token(TOKEN_TYPE_STR, std::string(token), strTable.size(), oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                 strTable.push_back(std::string(token));
                 return;
             }
-        case STATE_COMMENT_S_END: case STATE_COMMENT_END:
+        case STATE_COMMENT_S_END: case STATE_COMMENT: case STATE_COMMENT_END:
             {
-                tokens.push_back(Token(TOKEN_TYPE_COMMENT, std::string(token), 0));
+                tokens.push_back(Token(TOKEN_TYPE_COMMENT, std::string(token), 0, oldLine, oldLinePos-strlen(token)-1, strlen(token)));
                 return;
             }
         default:

@@ -50,11 +50,19 @@ class Token
         int valueInt = 0;       // 当类型为 TOKEN_TYPE_INT 时 token 的值
         float valueFloat = 0;   // 当类型为 TOKEN_TYPE_FLOAT 时 token 的值
 
+        // 用于语法高亮以及报错时找到对应行
+        int startPos;           // 所在行开始位置
+        int length;             // Token 长度
+        int lineNumber;         // 所处行号
+
         Token(){};
-        Token(int type, std::string name, int pos)
+        Token(int type, std::string name, int pos, int lineNumber = 0, int startPos = 0, int length = 0)
         {
             this->type = type;
             this->pos = pos;
+            this->lineNumber = lineNumber;
+            this->startPos = startPos;
+            this->length = length;
             if(type == TOKEN_TYPE_CHAR||type == TOKEN_TYPE_STR)
                 this->name = name.substr(1, name.size()-2);
             else
@@ -69,6 +77,9 @@ class Token
             type=oldToken.type;
             name=oldToken.name;
             pos=oldToken.pos;
+            lineNumber = oldToken.lineNumber;
+            startPos = oldToken.startPos;
+            length = oldToken.length;
             identifierAndIntPos=oldToken.identifierAndIntPos;
             valueInt=oldToken.valueInt;
             valueFloat=oldToken.valueFloat;
@@ -126,6 +137,10 @@ class Scan
         std::vector<std::string> identifierAndIntTable; // 标识符和常数大表
         std::vector<Token> tokens;                  // 词法分析完成后得到的 token 表
         int errPos;                                 // 错误位置，-1 表示无错误，0 表示其它错误
+        int line;                                   // 当前行
+        int oldLine;                                // 上一行
+        int linePos;                                // 当前行位置
+        int oldLinePos;                             // 上一行位置
 
         Scan();
         Scan(std::string filename);                 // 从文件构造
