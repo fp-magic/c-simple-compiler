@@ -11,7 +11,7 @@ Scan::Scan(std::string filename)
     FILE *fp = fopen(filename.c_str(), "r");
     if(fp == NULL)
     {
-        printf("Can't open file: %s\n", filename.c_str());
+        errMessage = "Error! Can't open file: " + filename;
         errPos = 0;
         return;
     }
@@ -45,8 +45,9 @@ Scan::Scan(std::string filename)
         else if(stateCur < 0)
         {
             token[tokenLen] = '\0';
-            printf("Error! Failed at %s\n", token);
+            errMessage = "Error! Failed at " + std::string(token);
             errPos = ftell(fp);
+            errLine = oldLine;
             fclose(fp);
             return;
         }
@@ -78,7 +79,7 @@ void Scan::initFrom(std::string plainText)
 {
     if(plainText.empty())
     {
-        printf("Can't init from empty string\n");
+        errMessage = "Error! Can't init from empty string";
         errPos = 0;
         return;
     }
@@ -116,8 +117,9 @@ void Scan::initFrom(std::string plainText)
         else if(stateCur < 0)
         {
             token[tokenLen] = '\0';
-            printf("Error! Failed at %s\n", token);
+            errMessage = "Error! Failed at " + std::string(token);
             errPos = cnt;
+            errLine = oldLine;
             return;
         }
         else
@@ -180,7 +182,9 @@ void Scan::initTable()
     strTable.clear();
     tokens.clear();
 
+    errMessage = "";
     errPos = -1;
+    errLine = -1;
     line = 0;
     linePos = 0;
     curIndex = 0;
@@ -374,7 +378,7 @@ void Scan::parseState(int stateBefore, char *token)
                         return;
                     }
                 }
-                printf("Unknown Delimiter %s\n", token);
+                errMessage = "Unknown Delimiter " + std::string(token);
                 //tokens.push_back(Token(TOKEN_TYPE_UNKNOWN, std::string(token), 0));
                 return;
             }

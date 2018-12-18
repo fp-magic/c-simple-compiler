@@ -137,6 +137,8 @@ class Scan
         std::vector<std::string> identifierAndIntTable; // 标识符和常数大表
         std::vector<Token> tokens;                  // 词法分析完成后得到的 token 表
         int errPos;                                 // 错误位置，-1 表示无错误，0 表示其它错误
+        int errLine;                                // 错误行号
+        std::string errMessage;                     // 错误原因
         int line;                                   // 当前行
         int oldLine;                                // 上一行
         int linePos;                                // 当前行位置
