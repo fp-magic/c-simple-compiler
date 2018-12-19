@@ -102,10 +102,10 @@ int main(void)
         syn.prepare_for_4elem();
 
         // 输出四元式
-        gen4elem();
-        genValls();
-        outputParam();
-        genAssembly();
+        syn.gen4elem();
+        syn.genValls();
+        syn.outputParam();
+        syn.genAssembly();
     }
     else
     {

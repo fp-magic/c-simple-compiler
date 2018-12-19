@@ -59,6 +59,7 @@
              | <empty>
 <mulop> := *
          | /
+         | %
 <factor> := ( <expression> )
           | <var>
           | <call>
