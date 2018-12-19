@@ -1,4 +1,5 @@
 #include "paramtable.h"
+
 void ParamTable::initAll()
 {
 #ifdef DEBUG
@@ -181,12 +182,17 @@ void ParamTable::alGeq(string op)
         id_tmp++;
     }
 }
-void ParamTable::alPush(int id, int arrayidx)
+void ParamTable::alPush(int id, bool isarray)
 { //之后要加一堆处理
 #ifdef DEBUG
     cout << "alPush" << ' ' << id << endl;
 #endif
-    alNums.push(id);
+    if(!isarray)
+        alNums.push(id);
+    else
+    {
+        alNums.push(id);
+    }
 }
 void ParamTable::alPop()
 {
@@ -343,7 +349,39 @@ void ParamTable::retNonum()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("ret", -1, -1, -1));
 }
-void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位置并输出四元式用来调试
+void ParamTable::genValls() //生成活动记录表
+{
+    basicValls.clear();
+    vall nowvall;
+    int i, sum, k;
+    for (k = 0; k < pfinf.size(); k++)
+    {
+        nowvall.var.clear();
+        nowvall.par.clear();
+        nowvall.size = 0;
+        sum = 0;
+        for (i = 0; i < pfinf[k].param.size(); i++)
+        {
+            nowvall.par.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
+            nowvall.var.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
+            sum += 2;
+        }
+        nowvall.parsize = sum;
+        sum += 2; //为call内的ip留个位置
+        for (i = 0; i < pfinf[k].synbs.size(); i++)
+        {
+            nowvall.var.insert(make_pair(synb[pfinf[k].synbs[i]].name, sum));
+            sum += 2;
+            if (synb[pfinf[k].synbs[i]].cat == 'l')
+            {
+                sum += 2 * (ainf[synb[pfinf[k].synbs[i]].addr].up - ainf[synb[pfinf[k].synbs[i]].addr].low);
+            }
+        }
+        nowvall.size = sum;
+        basicValls.push_back(nowvall);
+    }
+}
+void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位置，四元式优化，并输出四元式用来调试
 {
 #ifdef DEBUG
     cout << "wow we are generating elems!" << endl;
@@ -388,44 +426,45 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
             sem.pop();
         }
     }
+    vector<int>tmpelems;
+    elem tmpelem("",-1,-1,-1);
+    int l,r,num;
+    for (k = 1; k < pfinf.size(); k++)
+    {
+        tmpelems.clear();
+        for (i = 0; i < pfinf[k].elems.size(); i++)
+        {
+            tmpelem = elems[pfinf[k].elems[i]];
+            if(tmpelem.iscntop())
+            {
+                if(table_cons.count(tmpelem.id1)&&table_cons.count(tmpelem.id2))
+                {
+                    synb[basicValls[k].var[tmpelem.id0]].cat='c';
+                    l=table_cons[tmpelem.id1];
+                    r=table_cons[tmpelem.id2];
+                    if(tmpelem.st=="+")
+                        num=l+r;
+                    else if(tmpelem.st=="-")
+                        num=l-r;
+                    else if(tmpelem.st=="*")
+                        num=l*r;
+                    else if(tmpelem.st=="/")
+                        num=l/r;
+                    table_cons.insert(make_pair(tmpelem.id0,num));
+                }else  
+                    tmpelems.push_back(pfinf[k].elems[i]);
+            }else
+                tmpelems.push_back(pfinf[k].elems[i]);
+        }
+        pfinf[k].elems=tmpelems;
+    }
     for (i = 0; i < elems.size(); i++)
     {
         printf("%d: ", i);
         elems[i].output();
     }
 }
-void ParamTable::genValls() //生成活动记录表
-{
-    basicValls.clear();
-    vall nowvall;
-    int i, sum, k;
-    for (k = 0; k < pfinf.size(); k++)
-    {
-        nowvall.var.clear();
-        nowvall.par.clear();
-        nowvall.size = 0;
-        sum = 0;
-        for (i = 0; i < pfinf[k].param.size(); i++)
-        {
-            nowvall.par.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
-            nowvall.var.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
-            sum += 2;
-        }
-        nowvall.parsize = sum;
-        sum += 2; //为call内的ip留个位置
-        for (i = 0; i < pfinf[k].synbs.size(); i++)
-        {
-            nowvall.var.insert(make_pair(synb[pfinf[k].synbs[i]].name, sum));
-            sum += 2;
-            if (synb[pfinf[k].synbs[i]].cat == 'l')
-            {
-                sum += 2 * (ainf[synb[pfinf[k].synbs[i]].addr].up - ainf[synb[pfinf[k].synbs[i]].addr].low);
-            }
-        }
-        nowvall.size = sum;
-        basicValls.push_back(nowvall);
-    }
-}
+
 void ParamTable::outputParam()
 { //输出参数表内容
     int i, j;
@@ -570,7 +609,7 @@ void ParamTable::genAssembly()
         if (k != pfinf.size() - 1)
         {
             cout << "FUN" << k << "  PROC NEAR" << endl;
-            cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize - 2)/2 << endl;
+            cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize - 2) / 2 << endl;
             cout << "F" << k << "IN: NOP" << endl;
             cout << "PUSH  AX" << endl; //存临时变量和参数
             cout << "LOOP  F" << k << "IN" << endl;
@@ -586,7 +625,7 @@ void ParamTable::genAssembly()
             cout << "MOV   BP,SP" << endl;           //BP：当前函数栈顶
             cout << "MOV   DI,OFFSET MAINV" << endl; //DI：全局变量
             cout << "MOV   AX,0" << endl;
-            cout << "MOV   CX," << basicValls[k].size/2 << endl;
+            cout << "MOV   CX," << basicValls[k].size / 2 << endl;
             cout << "F" << k << "IN: NOP" << endl;
             cout << "PUSH  AX" << endl; //存临时变量和参数
             cout << "LOOP  F" << k << "IN" << endl;
@@ -630,6 +669,7 @@ void ParamTable::genAssembly()
                 }
                 else if (tmpelem.st == "/")
                 {
+                    cout << "MOV   DX,0" << endl;
                     cout << "DIV   BX" << endl;
                 }
                 else if (tmpelem.st == "%")
@@ -699,7 +739,7 @@ void ParamTable::genAssembly()
                 if (k != pfinf.size() - 1)
                 {
                     toax(k, tmpelem.id0);
-                    cout<<"JMP   F"<<k<<"O"<<endl;
+                    cout << "JMP   F" << k << "O" << endl;
                 }
                 else
                 {
@@ -708,10 +748,10 @@ void ParamTable::genAssembly()
                 }
             }
             else if (tmpelem.st == "ret")
-            {//此处需要照retnum修改
+            { //此处需要照retnum修改
                 if (k != pfinf.size() - 1)
                 {
-                    cout<<"JMP   F"<<k<<"O"<<endl;
+                    cout << "JMP   F" << k << "O" << endl;
                 }
                 else
                 {
@@ -722,13 +762,13 @@ void ParamTable::genAssembly()
         }
         if (k != pfinf.size() - 1)
         {
-            cout<<"F"<<k<<"O:  NOP"<<endl;
-            cout << "MOV   CX," << (basicValls[k].size -basicValls[k].parsize)/2 << endl;
+            cout << "F" << k << "O:  NOP" << endl;
+            cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize) / 2 << endl;
             cout << "F" << k << "O1:NOP" << endl;
             cout << "POP   DX" << endl; //释放临时变量栈空间（size-psize-2)+旧BP（2）
             cout << "LOOP  F" << k << "O1" << endl;
             cout << "POP   SI" << endl; //取出IP
-            cout << "MOV   CX," << basicValls[k].parsize/2 << endl;
+            cout << "MOV   CX," << basicValls[k].parsize / 2 << endl;
             cout << "F" << k << "O2:NOP" << endl;
             cout << "POP   DX" << endl; //释放参数栈空间
             cout << "LOOP  F" << k << "O2" << endl;
