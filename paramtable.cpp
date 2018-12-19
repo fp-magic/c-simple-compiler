@@ -72,7 +72,13 @@ void ParamTable::addNum(int id, bool isparam)
         if (synb[pfinf[Funcs.top()].synbs[i]].name == id)
         {
             if (id < 100)
+            {
+                haveErr = true;
+                errMessagePT = "Error! redeclaration of 'int " + to_string(id) + "'";
+#ifdef DEBUG
                 cout << "error: redeclaration of 'int " << id << "'" << endl;
+#endif
+            }
             return;
         }
     synbl newS;
@@ -92,7 +98,11 @@ void ParamTable::addArray(int id, int len, bool isparam)
     for (int i = 0; i < pfinf[Funcs.top()].synbs.size(); i++)
         if (synb[pfinf[Funcs.top()].synbs[i]].name == id)
         {
+            haveErr = true;
+            errMessagePT = "Error! redeclaration of 'int* " + to_string(id) + "'";
+#ifdef DEBUG
             cout << "error: redeclaration of 'int* " << id << "'" << endl;
+#endif
             return;
         }
     synbl newS;
@@ -151,14 +161,22 @@ void ParamTable::alGeq(string op)
     int id1, id2;
     if (alNums.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! invalid expression";
+#ifdef DEBUG
         cout << "error: invalid expression" << endl;
+#endif
         return;
     }
     id1 = alNums.top();
     alNums.pop();
     if (alNums.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! invalid expression";
+#ifdef DEBUG
         cout << "error: invalid expression" << endl;
+#endif
         return;
     }
     id2 = alNums.top();
@@ -201,7 +219,11 @@ void ParamTable::alPop()
 #endif
     if (alNums.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! alPop error";
+#ifdef DEBUG
         cout << "error: alPop error" << endl;
+#endif
         return;
     }
     alNums.pop();
@@ -213,7 +235,11 @@ void ParamTable::exIf()
 #endif
     if (alNums.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! expected primary-expression before ')' token";
+#ifdef DEBUG
         cout << "error: expected primary-expression before ')' token" << endl;
+#endif
         return;
     }
     int id1;
@@ -253,7 +279,11 @@ void ParamTable::exDo()
 #endif
     if (alNums.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! expected primary-expression before ')' token";
+#ifdef DEBUG
         cout << "error: expected primary-expression before ')' token" << endl;
+#endif
         return;
     }
     int id1;
@@ -277,8 +307,12 @@ void ParamTable::callBegin(int id)
 #endif
     if (!table_pfinf.count(id))
     {
+        haveErr = true;
+        errMessagePT = "Error! function was not declared in this scope";
+#ifdef DEBUG
         cout << "error: '"
              << "' was not declared in this scope" << endl;
+#endif
         return;
     }
     calls.push(id);
@@ -296,19 +330,31 @@ void ParamTable::callEnd()
 #endif
     if (calls.empty() || callParams.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! internal error in callEnd";
+#ifdef DEBUG
         cout << "internal error in callEnd" << endl;
+#endif
         return;
     }
     if (callParams.top() < pfinf[synb[table_pfinf[calls.top()]].addr].param.size())
     {
+        haveErr = true;
+        errMessagePT = "Error! too few arguments to function";
+#ifdef DEBUG
         cout << "error: too few arguments to function '"
              << "'" << endl;
+#endif
         return;
     }
     else if (callParams.top() > pfinf[synb[table_pfinf[calls.top()]].addr].param.size())
     {
+        haveErr = true;
+        errMessagePT = "Error! too many arguments to function";
+#ifdef DEBUG
         cout << "error: too many arguments to function '"
              << "'" << endl;
+#endif
         return;
     }
     calls.pop();
@@ -323,7 +369,11 @@ void ParamTable::callParam()
 #endif
     if (alNums.empty())
     {
+        haveErr = true;
+        errMessagePT = "Error! expected primary-expression before ')' token";
+#ifdef DEBUG
         cout << "error: expected primary-expression before ')' token" << endl;
+#endif
         return;
     }
     int id1;
@@ -458,11 +508,13 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
         }
         pfinf[k].elems=tmpelems;
     }
+#ifdef DEBUG
     for (i = 0; i < elems.size(); i++)
     {
         printf("%d: ", i);
         elems[i].output();
     }
+#endif
 }
 
 void ParamTable::outputParam()

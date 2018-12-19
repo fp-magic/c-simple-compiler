@@ -71,7 +71,9 @@ struct vall{
 class ParamTable
 {
 public:
-    ParamTable(){}
+    ParamTable(){haveErr = false;errMessagePT = "";}
+bool haveErr;
+string errMessagePT;
 
 vector<synbl> synb;
 vector<pfinfl> pfinf;
@@ -115,6 +117,7 @@ void genValls();
 void gen4elem();
 void outputParam();
 void genAssembly();
+
 void toax(int k, int id);
 void tobx(int k, int id);
 void axto(int k, int id);
