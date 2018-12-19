@@ -3,16 +3,16 @@
 
 Syntax::Syntax()
 {
-    errPos = -1;
-    errMessage = "";
+    errPos = 0;
+    errMessage = "Error! Parsing failed before ";
     syntaxProcess.clear();
     processIndex = 0;
 }
 
 Syntax::Syntax(Scan scanner)
 {
-    errPos = -1;
-    errMessage = "";
+    errPos = 0;
+    errMessage = "Error! Parsing failed before ";
     syntaxProcess.clear();
     processIndex = 0;
     this->scanner = scanner;
@@ -639,7 +639,7 @@ int Syntax::var_declaration()
                             if(scanner.curIndex - 1 > errPos)
                             {
                                 errPos = scanner.curIndex - 1;
-                                errMessage = "need ; before";
+                                errMessage = "Error! Need ; before ";
                             }
                             scanner.setIndex(ori_index);
                             return -1;
@@ -651,7 +651,7 @@ int Syntax::var_declaration()
                         if(scanner.curIndex - 1 > errPos)
                         {
                             errPos = scanner.curIndex - 1;
-                            errMessage = "need ] before";
+                            errMessage = "Error! Need ] before ";
                         }
                         scanner.setIndex(ori_index);
                         return -1;
@@ -663,7 +663,7 @@ int Syntax::var_declaration()
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
-                        errMessage = "need NUM before";
+                        errMessage = "Error! Need NUM before ";
                     }
                     scanner.setIndex(ori_index);
                     return -1;
@@ -675,7 +675,7 @@ int Syntax::var_declaration()
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
-                    errMessage = "need ; or [ before";
+                    errMessage = "Error! Need ; or [ before ";
                 }
                 scanner.setIndex(ori_index);
                 return -1;
@@ -687,7 +687,7 @@ int Syntax::var_declaration()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ID before";
+                errMessage = "Error! Need ID before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -746,7 +746,7 @@ int Syntax::fun_declaration()
                         if(scanner.curIndex - 1 > errPos)
                         {
                             errPos = scanner.curIndex - 1;
-                            errMessage = "need ) before";
+                            errMessage = "Error! Need ) before ";
                         }
                         scanner.setIndex(ori_index);
                         return -1;
@@ -765,7 +765,7 @@ int Syntax::fun_declaration()
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
-                    errMessage = "need ( before";
+                    errMessage = "Error! Need ( before ";
                 }
                 scanner.setIndex(ori_index);
                 return -1;
@@ -777,7 +777,7 @@ int Syntax::fun_declaration()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ID before";
+                errMessage = "Error! Need ID before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -813,6 +813,11 @@ int Syntax::type_specfier()
     else
     {
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        if(scanner.curIndex - 1 > errPos)
+        {
+            errPos = scanner.curIndex - 1;
+            errMessage = "Error! Need int or void before ";
+        }
         scanner.setIndex(ori_index);
         return -1;
     }
@@ -848,7 +853,7 @@ int Syntax::params()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need void before";
+                errMessage = "Error! Need void before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -981,7 +986,7 @@ int Syntax::param()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ID before";
+                errMessage = "Error! Need ID before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -1024,7 +1029,7 @@ int Syntax::compound_stmt()
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
-                        errMessage = "need } before";
+                        errMessage = "Error! Need } before ";
                     }
                     scanner.setIndex(ori_index);
                     return -1;
@@ -1051,7 +1056,7 @@ int Syntax::compound_stmt()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need { before";
+            errMessage = "Error! Need { before ";
         }
         scanner.setIndex(ori_index);
         return -1;
@@ -1293,7 +1298,7 @@ int Syntax::expression_stmt()
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
-                    errMessage = "need ; before";
+                    errMessage = "Error! Need ; before ";
                 }
                 scanner.setIndex(ori_index);
                 return -1;
@@ -1316,7 +1321,7 @@ int Syntax::expression_stmt()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ; before";
+                errMessage = "Error! Need ; before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -1391,7 +1396,7 @@ int Syntax::selection_stmt()
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
-                        errMessage = "need ) before";
+                        errMessage = "Error! Need ) before ";
                     }
                     scanner.setIndex(ori_index);
                     return -1;
@@ -1410,7 +1415,7 @@ int Syntax::selection_stmt()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ( before";
+                errMessage = "Error! Need ( before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -1422,7 +1427,7 @@ int Syntax::selection_stmt()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need if before";
+            errMessage = "Error! Need if before ";
         }
         scanner.setIndex(ori_index);
         return -1;
@@ -1471,7 +1476,7 @@ int Syntax::iteration_stmt()
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
-                        errMessage = "need ) before";
+                        errMessage = "Error! Need ) before ";
                     }
                     scanner.setIndex(ori_index);
                     return -1;
@@ -1490,7 +1495,7 @@ int Syntax::iteration_stmt()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ( before";
+                errMessage = "Error! Need ( before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -1502,7 +1507,7 @@ int Syntax::iteration_stmt()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need while before";
+            errMessage = "Error! Need while before ";
         }
         scanner.setIndex(ori_index);
         return -1;
@@ -1544,7 +1549,7 @@ int Syntax::return_stmt()
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
-                        errMessage = "need ; before";
+                        errMessage = "Error! Need ; before ";
                     }
                     scanner.setIndex(ori_index);
                     return -1;
@@ -1564,7 +1569,7 @@ int Syntax::return_stmt()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need return before";
+            errMessage = "Error! Need return before ";
         }
         scanner.setIndex(ori_index);
         return -1;
@@ -1706,7 +1711,7 @@ int Syntax::var()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need ID before";
+            errMessage = "Error! Need ID before ";
         }
         scanner.setIndex(ori_index);
         return -1;
@@ -1883,7 +1888,7 @@ int Syntax::relop()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need <=, <, >, >=, == or != before";
+            errMessage = "Error! Need <=, <, >, >=, == or != before ";
         }
         scanner.back();
         return -1;
@@ -1991,7 +1996,7 @@ int Syntax::addop()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need + or - before";
+            errMessage = "Error! Need + or - before ";
         }
         scanner.back();
         return -1;
@@ -2024,7 +2029,7 @@ int Syntax::factor()
                 if(scanner.curIndex - 1 > errPos)
                 {
                     errPos = scanner.curIndex - 1;
-                    errMessage = "need ) before";
+                    errMessage = "Error! Need ) before ";
                 }
                 scanner.setIndex(ori_index);
                 return -1;
@@ -2095,7 +2100,7 @@ int Syntax::mulop()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need * or / before";
+            errMessage = "Error! Need * or / before ";
         }
         scanner.back();
         return -1;
@@ -2134,7 +2139,7 @@ int Syntax::call()
                     if(scanner.curIndex - 1 > errPos)
                     {
                         errPos = scanner.curIndex - 1;
-                        errMessage = "need ) before";
+                        errMessage = "Error! Need ) before ";
                     }
                     scanner.setIndex(ori_index);
                     return -1;
@@ -2153,7 +2158,7 @@ int Syntax::call()
             if(scanner.curIndex - 1 > errPos)
             {
                 errPos = scanner.curIndex - 1;
-                errMessage = "need ( before";
+                errMessage = "Error! Need ( before ";
             }
             scanner.setIndex(ori_index);
             return -1;
@@ -2165,7 +2170,7 @@ int Syntax::call()
         if(scanner.curIndex - 1 > errPos)
         {
             errPos = scanner.curIndex - 1;
-            errMessage = "need ID before";
+            errMessage = "Error! Need ID before ";
         }
         scanner.setIndex(ori_index);
         return -1;
