@@ -67,7 +67,7 @@ int main(void)
 "<addop> := +",
 "<addop> := -",
 "<term> := <factor> <term_tail>",
-"<term_tail> := <mulop> <factor>",
+"<term_tail> := <mulop> <factor> <term_tail>",
 "<term_tail> := <empty>",
 "<mulop> := *",
 "<mulop> := /",
