@@ -97,12 +97,20 @@ int main(void)
 
         printf("\n\n\n");
         
-        // 重置下个 Token 位置，在已确定的语法分析过程中为生成四元式做准备
-        syn.scanner.curIndex = 0;
-        syn.prepare_for_4elem();
-
         // 输出四元式
-        syn.gen4elem();
+        try{
+            // 重置下个 Token 位置，在已确定的语法分析过程中为生成四元式做准备
+            syn.scanner.curIndex = 0;
+            syn.prepare_for_4elem();
+            syn.gen4elem();
+        }catch(...){}
+
+        if(syn.haveErr)
+        {
+            printf("%s\n", syn.errMessagePT);
+            return 0;
+        }
+
         syn.genValls();
         syn.outputParam();
         syn.genAssembly();
