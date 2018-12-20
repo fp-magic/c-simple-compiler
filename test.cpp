@@ -107,13 +107,14 @@ int main(void)
 
         if(syn.haveErr)
         {
-            printf("%s\n", syn.errMessagePT);
+            printf("%s\n", syn.errMessagePT.c_str());
             return 0;
         }
 
         syn.genValls();
         syn.outputParam();
         syn.genAssembly();
+        syn.outputAssembly();
     }
     else
     {
