@@ -2432,7 +2432,7 @@ int Syntax::output_stmt()
     int res, ori_index, ori_process;
     ori_index = scanner.curIndex;
     ori_process = syntaxProcess.size();
-    syntaxProcess.push_back(PROCESS_INPUT_STMT);
+    syntaxProcess.push_back(PROCESS_OUTPUT_STMT);
     Token temp = scanner.next();
     if(temp.isKeyWord()&&temp.name == std::string("output"))
     {
