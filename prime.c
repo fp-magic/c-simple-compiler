@@ -27,14 +27,16 @@ int isPrime(int x)
 int main(void)
 {
     int num;
+    int res;
     scanf("%d", &num);
     if(isPrime(num) == 1)
     {
-        printf("1\n");
+        res = 1;
     }
     else
     {
-        printf("0\n");
+        res = 0;
     }
+    printf("%d\n", res);
     return 0;
 }

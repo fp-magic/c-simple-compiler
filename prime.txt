@@ -27,15 +27,17 @@ int isPrime(int x)
 int main(void)
 {
     int num;
+    int res;
     input(num);
     if(isPrime(num) == 1)
     {
-        output(1);
+        res = 1;
     }
     else
     {
-        output(0);
+        res = 0;
     }
+    output(res);
     return 0;
 }
 
