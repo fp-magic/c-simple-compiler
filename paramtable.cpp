@@ -334,6 +334,40 @@ void ParamTable::exWe()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("we", -1, -1, -1));
 }
+void ParamTable::exIn()
+{
+#ifdef DEBUG
+    cout << "exIn" << endl;
+#endif
+    int id0,diffid0=-1;
+    pfinf[Funcs.top()].elems.push_back(elems.size());  
+    id0 = alNums.top();
+    alNums.pop();
+    if (table_ainf.count(id0))
+    {
+        diffid0 = alNums.top();
+        alNums.pop();
+        id0 = ainf[synb[table_ainf[id0]].addr].low;
+    }
+    elems.push_back(elem("in",diffid0,-1,id0));
+}
+void ParamTable::exOut()
+{
+#ifdef DEBUG
+    cout << "exOut" << endl;
+#endif 
+    int id0,diffid0=-1;
+    pfinf[Funcs.top()].elems.push_back(elems.size());  
+    id0 = alNums.top();
+    alNums.pop();
+    if (table_ainf.count(id0))
+    {
+        diffid0 = alNums.top();
+        alNums.pop();
+        id0 = ainf[synb[table_ainf[id0]].addr].low;
+    }
+    elems.push_back(elem("out",diffid0,-1,id0));
+}
 void ParamTable::callBegin(int id)
 {
 #ifdef DEBUG
@@ -564,10 +598,10 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
                     }else
                     {
                         iscons[tmpelem.id0]=-1;
-        }
+                    }
                 }else
                     memset(iscons,255,sizeof(iscons));               
-    }
+            }
         }
     }
     for (k = 1; k < pfinf.size(); k++)//dag优化
@@ -626,6 +660,47 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
                 memset(lastmodify,255,sizeof(lastmodify));
                 oldtonew.clear();
                 newtoold.clear();
+            }
+        }
+    }
+    int idx;
+    for(i=0;i<elems.size();i++)//初始化活跃信息表
+    {
+        qt[0].push_back(true);
+        qt[1].push_back(true);
+        qt[2].push_back(true);
+    }
+    for (k = 1; k < pfinf.size(); k++)//计算活跃信息
+    {
+        for (i = 0; i < pfinf[k].elems.size(); i++)
+        {
+            tmpelem = elems[pfinf[k].elems[i]];
+            idx=pfinf[k].elems[i];
+            if (tmpelem.iscntop()||tmpelem.st=="="||tmpelem.st=="arr1"||tmpelem.st=="arr2")
+            {        
+                if(tmpelem.iscntop())
+                {
+                    qt[0][idx]=symbl[tmpelem.id0];
+                    symbl[tmpelem.id0]=false;
+                    qt[1][idx]=symbl[tmpelem.id1];
+                    symbl[tmpelem.id1]=true;
+                    qt[2][idx]=symbl[tmpelem.id2];
+                    symbl[tmpelem.id2]=true;
+                }else if(tmpelem.st=="=")
+                {
+                    qt[0][idx]=symbl[tmpelem.id0];
+                    symbl[tmpelem.id0]=false;
+                    qt[1][idx]=symbl[tmpelem.id1];
+                    symbl[tmpelem.id1]=true;
+                }else
+                {
+                    qt[0][idx]=symbl[tmpelem.id0];
+                    symbl[tmpelem.id0]=true;
+                }
+            }else
+            {
+                memset(symbl,0,sizeof(symbl));
+                for(j=0;j<100;j++)symbl[i]=true;
             }
         }
     }
@@ -688,6 +763,17 @@ void ParamTable::outputParam()
 }
 void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax的汇编指令
 {
+    if(locra==id&&locradiff==diffid)//考虑要找的数据已经在寄存器的情况
+        return;
+    if(locrc==id&&locrcdiff==diffid)
+    {
+        locra=id;
+        locradiff=diffid;
+        assemblyRes.push_back("MOV   AX,CX");
+        return;
+    }
+    locra=id;
+    locradiff=diffid;
     if (table_cons.count(id)) //为常数
     {
         //cout << "MOV   AX," << table_cons[id] << endl;
@@ -760,6 +846,17 @@ void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax
 }
 void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax的汇编指令
 {
+    if(locrc==id&&locrcdiff==diffid)//考虑要找的数据已经在寄存器的情况
+        return;
+    if(locra==id&&locradiff==diffid)
+    {
+        locrc=id;
+        locrcdiff=diffid;
+        assemblyRes.push_back("MOV   CX,AX");
+        return;
+    }
+    locrc=id;
+    locrcdiff=diffid;
     if (table_cons.count(id))
     {
         //cout << "MOV   CX," << table_cons[id] << endl;
@@ -961,8 +1058,47 @@ void ParamTable::genAssembly()
     assemblyRes.push_back("DSEG  ENDS");
     assemblyRes.push_back("CSEG  SEGMENT");
     assemblyRes.push_back("      ASSUME  SS:SSEG,CS:CSEG,DS:DSEG");
+    // 输入输出子程序
+    assemblyRes.push_back("INFUN  PROC NEAR");
+    assemblyRes.push_back("MOV   DX,0");
+    assemblyRes.push_back("MOV   CX,0");
+    assemblyRes.push_back("INFUN1:MOV	  AH,01H");
+    assemblyRes.push_back("INT   21H");
+    assemblyRes.push_back("CMP   AL,48");
+    assemblyRes.push_back("JB    INFUN2");
+    assemblyRes.push_back("SUB   AL,48");
+    assemblyRes.push_back("MOV   CL,AL");
+    assemblyRes.push_back("MOV	  AX,DX");
+    assemblyRes.push_back("MOV   DX,10");
+    assemblyRes.push_back("MUL   DX");
+    assemblyRes.push_back("ADD   AX,CX");
+    assemblyRes.push_back("MOV   DX,AX");
+    assemblyRes.push_back("JMP   INFUN1");
+    assemblyRes.push_back("INFUN2:MOV   AX,DX");
+    assemblyRes.push_back("RET");
+    assemblyRes.push_back("INFUN  ENDP");
+    assemblyRes.push_back("OUTFUN PROC NEAR");
+    assemblyRes.push_back("PUSH  BX");
+    assemblyRes.push_back("MOV   BX,10");
+    assemblyRes.push_back("MOV   CX,0");
+    assemblyRes.push_back("OUTFUN1:MOV   DX,0");
+    assemblyRes.push_back("DIV   BX");
+    assemblyRes.push_back("ADD   DL,30H");
+    assemblyRes.push_back("PUSH  DX");
+    assemblyRes.push_back("INC   CX");
+    assemblyRes.push_back("AND   AX,AX");
+    assemblyRes.push_back("JZ    OUTFUN2");
+    assemblyRes.push_back("JMP   OUTFUN1");
+    assemblyRes.push_back("OUTFUN2:POP   DX");
+    assemblyRes.push_back("MOV   AH,02H");
+    assemblyRes.push_back("INT   21H");
+    assemblyRes.push_back("LOOP  OUTFUN2");
+    assemblyRes.push_back("POP   BX");
+    assemblyRes.push_back("RET");
+    assemblyRes.push_back("OUTFUN ENDP");
     for (k = 1; k < pfinf.size(); k++)
     {
+        locra=locrc=locradiff=locrcdiff=-1;
         if (k != pfinf.size() - 1)
         {
             //cout << "FUN" << k << "  PROC NEAR" << endl;
@@ -1025,17 +1161,20 @@ void ParamTable::genAssembly()
                 assemblyRes.push_back("F" + to_string(k) + "T" + to_string(pfinf[k].elems[i]) + ": NOP");
             if (tmpelem.st == "=")
             {
-
-                toax(k, tmpelem.id1, diffid1);
-                diffid1 = -1;
+#ifdef DEBUG
+                cout<<tmpelem.id1<<' '<<locra<<' '<<diffid1<<' '<<locradiff<<endl;
+#endif
+                if(!(tmpelem.id1==locra&&diffid1==locradiff))
+                    toax(k, tmpelem.id1, diffid1);
                 axto(k, tmpelem.id0, diffid2);
+                diffid1 = -1;
                 diffid2 = -1;
             }
             else if (tmpelem.iscntop())
             {
                 toax(k, tmpelem.id1, diffid1);
-                diffid1 = -1;
                 tocx(k, tmpelem.id2, diffid2);
+                diffid1 = -1;
                 diffid2 = -1;
                 if (tmpelem.st == "+")
                 {
@@ -1066,6 +1205,8 @@ void ParamTable::genAssembly()
                     assemblyRes.push_back("DIV   CX");
                     assemblyRes.push_back("MOV   AX,DX");
                 }
+                locra=tmpelem.id0;
+                locradiff=-1;
                 axto(k, tmpelem.id0);
             }
             else if (tmpelem.isjugop())
@@ -1131,6 +1272,7 @@ void ParamTable::genAssembly()
             {
                 //cout << "CALL  FUN" << tmp << endl;
                 //cout << "POP   AX" << endl;
+                locra=locrc=locradiff=locradiff=-1;
                 assemblyRes.push_back("CALL  FUN" + to_string(tmp));
                 assemblyRes.push_back("POP   AX");
                 axto(k, tmpsynb);
@@ -1173,6 +1315,19 @@ void ParamTable::genAssembly()
             else if (tmpelem.st == "arr2")
             {
                 diffid2 = tmpelem.id0;
+            }
+            else if(tmpelem.st=="in")
+            {
+                assemblyRes.push_back("CALL INFUN");
+                locra=locradiff=-1;
+                axto(k,tmpelem.id0,tmpelem.id1);
+                locra=tmpelem.id0;locradiff=tmpelem.id1;
+            }
+            else if(tmpelem.st=="out")
+            {
+                toax(k,tmpelem.id0,tmpelem.id1);
+                assemblyRes.push_back("CALL OUTFUN");
+                locra=locradiff=-1;
             }
         }
         if (k != pfinf.size() - 1)
@@ -1221,6 +1376,7 @@ void ParamTable::genAssembly()
             assemblyRes.push_back("CSEG  ENDS");
             assemblyRes.push_back("      END   START");
         }
+        locra=locrc=locradiff=locrcdiff=-1;
     }
     valls.clear();
 }

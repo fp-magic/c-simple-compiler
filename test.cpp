@@ -42,6 +42,8 @@ int main(void)
 "<statement> := <selection_stmt>",
 "<statement> := <iteration_stmt>",
 "<statement> := <return_stmt>",
+"<statement> := <input_stmt>",
+"<statement> := <output_stmt>",
 "<expression_stmt> := <expression> ;",
 "<expression_stmt> := ;",
 "<selection_stmt> := if ( <expression> ) <statement>",
@@ -81,6 +83,8 @@ int main(void)
 "<arg_list> := <expression> <arg_list_tail>",
 "<arg_list_tail> := , <expression> <arg_list_tail>",
 "<arg_list_tail> := <empty>",
+"<input_stmt> := input ( <var> ) ;",
+"<output_stmt> := output ( <var> ) ;",
     };
 
     // 构造时进行词法分析

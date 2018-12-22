@@ -30,6 +30,8 @@
              | <selection_stmt>
              | <iteration_stmt>
              | <return_stmt>
+             | <input_stmt>
+             | <output_stmt>
 <expression_stmt> := <expression> ;
                    | ;
 <selection_stmt> := if ( <expression> exIf() ) <statement> exIe()
@@ -70,3 +72,5 @@
 <arg_list> := <expression> callParam() <arg_list_tail>
 <arg_list_tail> := , <expression> callParam() <arg_list_tail>
                  | <empty>
+<input_stmt> := input ( <var> exIn() ) ;
+<output_stmt> := output ( <var> exOut() ) ;
